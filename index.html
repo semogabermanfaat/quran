@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Al-Quran · Immersive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Lateef:wght@400;500&family=Noto+Naskh+Arabic:wght@400;500&family=Scheherazade+New:wght@400;500&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #f7f2e4;
+    --muted: rgba(247, 242, 228, 0.7);
+    --gold: #e9c98a;
+    --glass: rgba(8, 12, 10, 0.55);
+    --glass-strong: rgba(10, 15, 13, 0.92);
+    --line: rgba(255, 255, 255, 0.08);
+    --font-ar: 'Amiri', serif;
+    --font-id: 'Plus Jakarta Sans', sans-serif;
+    --ar-scale: 1;
+    --id-scale: 0.9;
+    --info-scale: 0.85;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: #070a09; color: var(--ink);
+    font-family: var(--font-id); user-select: none;
+  }
+  button, select, input { font-family: inherit; }
+
+  /* ---------- Navigasi Remote TV (Focus Ring Khusus Elemen Interaktif) ---------- */
+  button:focus, select:focus, input:focus {
+    outline: 3px solid var(--gold) !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 15px rgba(233, 201, 138, 0.8) !important;
+  }
+
+  /* ---------- Latar Animasi Bergerak ---------- */
+  #scene, #scene-custom { position: fixed; inset: 0; z-index: 0; transition: opacity 0.8s ease-in-out; }
+  #scene svg { width: 100%; height: 100%; display: block; }
+  #scene-custom { background-size: cover; background-position: center; opacity: 0; pointer-events: none; }
+  
+  .overlay {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.88) 100%);
+  }
+
+  /* Keyframes Animasi */
+  .twinkle { animation: twinkle 3s ease-in-out infinite alternate; }
+  @keyframes twinkle { 0% { opacity: 0.15; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.1); } }
+  .firefly { animation: firefly 4s ease-in-out infinite alternate; fill: #e9c98a; filter: drop-shadow(0 0 6px #e9c98a); }
+  @keyframes firefly { 0% { opacity: 0; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-15px); } 100% { opacity: 0; transform: translateY(-30px); } }
+  .drift { animation: drift 35s ease-in-out infinite alternate; }
+  @keyframes drift { from { transform: translateX(-3%); } to { transform: translateX(3%); } }
+  .sway { transform-origin: bottom center; animation: sway 6s ease-in-out infinite alternate; }
+  @keyframes sway { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+  .sun-pulse { animation: sun-pulse 8s ease-in-out infinite alternate; transform-origin: center; }
+  @keyframes sun-pulse { 0% { transform: scale(0.95); opacity: 0.85; } 100% { transform: scale(1.05); opacity: 1; } }
+  .fly-across { animation: fly-across 45s linear infinite; }
+  @keyframes fly-across { from { transform: translateX(-300px); } to { transform: translateX(1900px); } }
+  .wave-back { animation: waveB 8s ease-in-out infinite alternate; }
+  @keyframes waveB { from { transform: translateX(-2%) translateY(0); } to { transform: translateX(2%) translateY(-10px); } }
+  .wave-mid { animation: waveM 6s ease-in-out infinite alternate-reverse; }
+  @keyframes waveM { from { transform: translateX(2%) translateY(0); } to { transform: translateX(-2%) translateY(-15px); } }
+  .wave-front { animation: waveF 5s ease-in-out infinite alternate; }
+  @keyframes waveF { from { transform: translateX(-3%) translateY(0); } to { transform: translateX(3%) translateY(-8px); } }
+  .shooting-star { animation: shoot 12s linear infinite; stroke-dasharray: 400; stroke-dashoffset: 400; }
+  @keyframes shoot { 0%, 50% { stroke-dashoffset: 400; opacity: 0; transform: translate(0,0); } 55% { stroke-dashoffset: 0; opacity: 1; transform: translate(-300px, 300px); } 100% { opacity: 0; } }
+
+  /* ---------- Layout Utama ---------- */
+  #app { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; }
+
+  .top {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 68px 14px 20px; flex-wrap: wrap;
+  }
+  .brand { margin-right: auto; font-size: 0.95rem; font-weight: 500; letter-spacing: 0.04em; opacity: 0.92; }
+  .brand b { color: var(--gold); font-weight: 600; }
+
+  .pill {
+    font-size: 0.85rem; color: var(--ink); background: var(--glass);
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 8px 14px; cursor: pointer;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    transition: border-color 0.2s, background 0.2s; outline: none;
+  }
+  .pill:hover { border-color: rgba(233, 201, 138, 0.4); }
+  .pill option { background: #121715; color: var(--ink); }
+  .pill svg { width: 18px; height: 18px; pointer-events: none; }
+
+  .fs-float {
+    position: fixed; top: 14px; right: 18px; z-index: 15;
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--glass); color: var(--ink);
+    cursor: pointer; display: grid; place-items: center;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .fs-float:hover { border-color: var(--gold); color: var(--gold); }
+  .fs-float svg { width: 20px; height: 20px; pointer-events: none; }
+
+  /* ---------- Area Ayat & Tipografi ---------- */
+  .stage {
+    flex: 1; display: flex; flex-direction: column;
+    padding: 2vh 6vw; overflow-y: auto; overflow-x: hidden;
+    scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+  }
+  .verse {
+    margin: auto auto 8vh auto;
+    max-width: 960px; width: 100%; text-align: center; padding: 16px 0;
+    transition: opacity 0.4s ease, transform 0.4s ease, filter 0.4s ease; user-select: text;
+  }
+  .verse.hide { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+
+  .surah-title { font-size: calc(1.2rem * var(--info-scale)); font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin: 0 0 4px; }
+  .surah-sub { font-size: calc(1.1rem * var(--info-scale)); font-style: italic; color: var(--muted); margin: 0 0 24px; letter-spacing: 0.04em; }
+  .bismillah {
+    font-family: var(--font-ar); font-size: calc(clamp(1.4rem, 3.2vw, 2.2rem) * var(--info-scale));
+    color: var(--gold); margin: 20px 0 24px; text-shadow: 0 2px 16px rgba(0,0,0,0.8);
+  }
+
+  .ar-text {
+    font-family: var(--font-ar); font-weight: 400;
+    font-size: calc(clamp(1.5rem, 3.5vw, 2.3rem) * var(--ar-scale));
+    line-height: 1.85; direction: rtl; margin: 0 0 16px; color: #fffdf7;
+    text-shadow: 0 4px 24px rgba(0,0,0,0.85); word-spacing: 2px;
+  }
+  .id-text {
+    font-family: var(--font-id); font-weight: 500;
+    font-size: calc(clamp(1.15rem, 2.5vw, 1.6rem) * var(--id-scale));
+    line-height: 1.65; color: #fbf6e8; margin: 0 auto; max-width: 44em;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.9);
+  }
+
+  .ayah-footer {
+    display: inline-flex; align-items: center; gap: 12px; margin-top: 24px; padding: 6px 18px;
+    border-radius: 999px; background: rgba(0,0,0,0.35); border: 1px solid var(--line);
+    font-size: calc(1rem * var(--info-scale)); font-weight: 500; color: var(--gold); letter-spacing: 0.05em; user-select: none;
+  }
+
+  /* ---------- Dock Pemutar ---------- */
+  .dock {
+    margin: 0 auto 18px; width: min(680px, 94vw);
+    background: var(--glass); border: 1px solid var(--line);
+    border-radius: 28px;
+    padding: 12px 18px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    display: flex; flex-direction: column; gap: 8px; box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  }
+  .row { display: flex; align-items: center; gap: 8px; }
+  
+  .play {
+    width: 50px; height: 50px; border-radius: 50%; border: none;
+    background: var(--gold); color: #1b1608; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(233, 201, 138, 0.25);
+    transition: transform 0.15s, background 0.2s;
+  }
+  .play svg { width: 22px; height: 22px; pointer-events: none; transition: margin 0.2s; }
+  .play:not(.is-playing) svg { margin-left: 3px; } 
+  .play.is-playing svg { margin-left: 0; }
+  .play:hover { transform: scale(1.05); background: #f3d89c; }
+  .play:active { transform: scale(0.97); }
+
+  .ctl {
+    background: none; border: none; color: var(--ink); cursor: pointer; opacity: 0.8;
+    padding: 6px 8px; border-radius: 8px; display: grid; place-items: center;
+    transition: opacity 0.2s, color 0.2s, background 0.2s;
+  }
+  .ctl svg { width: 22px; height: 22px; pointer-events: none; }
+  .ctl:hover { opacity: 1; background: rgba(255,255,255,0.08); }
+  .ctl.fx-on { color: var(--gold); opacity: 1; }
+
+  .meta { flex: 1; min-width: 0; font-size: 0.95rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; text-align: center; }
+  .time-lbl { font-size: 0.74rem; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 34px; text-align: center; }
+  .progress-wrap { display: flex; align-items: center; gap: 8px; }
+  .progress { flex: 1; height: 4px; accent-color: var(--gold); cursor: pointer; margin: 0; }
+
+  /* ---------- Panel Pengaturan ---------- */
+  .panel {
+    position: absolute; top: 62px; right: 18px; width: min(380px, 92vw); max-height: calc(100vh - 160px);
+    overflow-y: auto; background: var(--glass-strong); border: 1px solid var(--line); border-radius: 24px;
+    padding: 24px 18px 18px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 18px 48px rgba(0,0,0,0.65); display: none; z-index: 12;
+    scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+  }
+  .panel.open { display: block; animation: popIn 0.2s ease; }
+  @keyframes popIn { from { opacity: 0; transform: translateY(-6px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  
+  .close-btn {
+    position: absolute; top: 14px; right: 14px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--line);
+    color: var(--ink); border-radius: 50%; width: 28px; height: 28px;
+    font-size: 0.9rem; cursor: pointer; display: grid; place-items: center;
+    transition: background 0.2s, color 0.2s, transform 0.2s;
+  }
+  .close-btn:hover { background: rgba(233,201,138,0.2); color: var(--gold); transform: scale(1.08); }
+
+  .panel h3 { margin: 18px 0 10px; font-size: 0.75rem; color: var(--gold); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; }
+  .panel h3:first-of-type { margin-top: 4px; padding-right: 32px; }
+  
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: 0.8rem; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line);
+    background: rgba(255,255,255,0.05); cursor: pointer; color: var(--ink); transition: all 0.18s ease;
+  }
+  .chip:hover { border-color: rgba(233, 201, 138, 0.4); }
+  .chip.on { background: var(--gold); color: #1b1608; border-color: var(--gold); font-weight: 600; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; font-size: 0.83rem; margin: 10px 0; color: var(--muted); }
+  .slider-row span.lbl { width: 94px; flex-shrink: 0; }
+  .slider-row input[type="range"] { flex: 1; accent-color: var(--gold); cursor: pointer; }
+  
+  .input-text {
+    flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line);
+    background: rgba(0,0,0,0.4); color: white; outline: none; font-size: 0.8rem;
+  }
+  .input-text:focus { border-color: var(--gold); }
+
+  /* Mode Layar Penuh */
+  body.immersive .top, body.immersive .panel, body.immersive .progress-wrap,
+  body.immersive .dock .row > *:not(#play):not(#prevAyah):not(#nextAyah) { display: none !important; }
+  body.immersive .dock { background: transparent; border: none; box-shadow: none; backdrop-filter: none; padding: 0; width: auto; margin-bottom: 3.5vh; }
+  body.immersive .dock .row { justify-content: center; gap: 18px; }
+  body.immersive .play { width: 64px; height: 64px; }
+  body.immersive .play svg { width: 30px; height: 30px; }
+  body.immersive .dock .ctl { background: var(--glass); border: 1px solid var(--line); border-radius: 50%; width: 48px; height: 48px; padding: 0; }
+
+  @media (max-width: 720px) {
+    .brand { display: none; }
+    .top { padding: 10px 58px 8px 12px; gap: 6px; }
+    #surahSel { max-width: 155px; }
+    .dock { border-radius: 22px; padding: 10px 14px; margin-bottom: 12px; }
+    .meta { display: none; }
+    .row { justify-content: space-between; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Pre-Load Audio Alam -->
+<audio id="audio-rain" src="https://cdn.jsdelivr.net/gh/karthiknvd/noctune@main/sounds/rain.mp3" loop crossorigin="anonymous" preload="none"></audio>
+<audio id="audio-thunder" src="https://cdn.jsdelivr.net/gh/karthiknvd/noctune@main/sounds/thunder.mp3" loop crossorigin="anonymous" preload="none"></audio>
+<audio id="audio-river" src="https://cdn.jsdelivr.net/gh/karthiknvd/noctune@main/sounds/river.mp3" loop crossorigin="anonymous" preload="none"></audio>
+<audio id="audio-forest" src="https://cdn.jsdelivr.net/gh/karthiknvd/noctune@main/sounds/night.mp3" loop crossorigin="anonymous" preload="none"></audio>
+<audio id="audio-fire" src="https://cdn.jsdelivr.net/gh/karthiknvd/noctune@main/sounds/campfire.mp3" loop crossorigin="anonymous" preload="none"></audio>
+
+<!-- Latar -->
+<div id="scene"></div>
+<div id="scene-custom"></div>
+<div class="overlay"></div>
+
+<div id="app">
+  <!-- Navigasi Atas -->
+  <div class="top">
+    <div class="brand"><b>Al-Quran</b> · Immersive</div>
+    <select id="surahSel" class="pill" aria-label="Pilih surah" title="Pilih Surah"></select>
+    <select id="ayahSel" class="pill" aria-label="Pilih ayat" title="Lompat ke Ayat"></select>
+    <select id="reciter" class="pill" aria-label="Pilih qari" title="Pilih Qari">
+      <option value="Alafasy_128kbps">Mishary Alafasy</option>
+      <option value="Abdul_Basit_Murattal_192kbps">Abdul Basit (Murattal)</option>
+      <option value="Abdul_Basit_Mujawwad_128kbps">Abdul Basit (Mujawwad)</option>
+      <option value="Husary_128kbps">Mahmoud Al-Husary</option>
+      <option value="Minshawy_Murattal_128kbps">Al-Minshawi</option>
+      <option value="Abdurrahmaan_As-Sudais_192kbps">Abdurrahman As-Sudais</option>
+      <option value="Yasser_Ad-Dussary_128kbps">Yasser Al-Dosari</option>
+    </select>
+    <button class="pill" id="btnPanel" aria-label="Pengaturan">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+      <span>Setelan</span>
+    </button>
+  </div>
+
+  <!-- Panel Pengaturan -->
+  <div class="panel" id="panel">
+    <button id="btnClosePanel" class="close-btn" aria-label="Tutup Panel">✕</button>
+
+    <!-- Tombol Instal PWA (Hanya Muncul jika Didukung Browser) -->
+    <button class="pill" id="btnInstallApp" style="display:none; width: 100%; margin-bottom: 15px; background: var(--gold); color: #000; font-weight: bold;">
+      ⬇️ Instal Aplikasi ke Perangkat
+    </button>
+
+    <h3>Latar Animasi</h3>
+    <div class="chips" id="sceneChips">
+      <button class="chip on" data-q="night">🌌 Malam</button>
+      <button class="chip" data-q="dawn">🌅 Fajar</button>
+      <button class="chip" data-q="mosque">🕌 Masjid</button>
+      <button class="chip" data-q="forest">🌲 Hutan</button>
+      <button class="chip" data-q="sea">🌊 Pantai</button>
+    </div>
+
+    <h3>Wallpaper Custom (Pinterest / Web)</h3>
+    <div class="slider-row">
+      <input type="text" id="wallInput" class="input-text" placeholder="Link Pinterest (pin.it) atau .jpg">
+      <button class="pill" id="btnWallSearch" style="background: var(--gold); color:#000;">Terapkan</button>
+    </div>
+
+    <h3>Sumber Database Al-Quran</h3>
+    <div class="slider-row">
+      <select id="apiSource" class="pill" style="flex:1;">
+        <option value="equran">EQuran.id (Kemenag RI)</option>
+        <option value="quranjson">QuranJSON (GitHub Aktif)</option>
+        <option value="alqurancloud">AlQuran.cloud (Global)</option>
+      </select>
+    </div>
+
+    <h3>Suara Alam (Stabil)</h3>
+    <div class="chips" id="soundChips"></div>
+    <div class="slider-row">
+      <span class="lbl">Vol Alam</span>
+      <input type="range" id="fxVol" min="0" max="1" step="0.01" value="0.5">
+    </div>
+
+    <h3>Tipografi & Ukuran Teks</h3>
+    <div class="slider-row">
+      <span class="lbl">Font Arab</span>
+      <select id="fontAr" class="pill" style="flex:1;">
+        <option value="'Amiri', serif">Amiri (Standar)</option>
+        <option value="'Noto Naskh Arabic', serif">Noto Naskh</option>
+        <option value="'Scheherazade New', serif">Scheherazade</option>
+        <option value="'Lateef', serif">Lateef</option>
+      </select>
+    </div>
+    <div class="slider-row">
+      <span class="lbl">Ukuran Arab</span>
+      <input type="range" id="arSize" min="0.7" max="1.5" step="0.05" value="1">
+    </div>
+    
+    <div class="slider-row" style="margin-top: 16px;">
+      <span class="lbl">Font Terjemah</span>
+      <select id="fontId" class="pill" style="flex:1;">
+        <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans</option>
+        <option value="'Inter', sans-serif">Inter</option>
+        <option value="'Lora', serif">Lora (Serif)</option>
+        <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+      </select>
+    </div>
+    <div class="slider-row">
+      <span class="lbl">Uk. Terjemah</span>
+      <input type="range" id="idSize" min="0.6" max="1.5" step="0.05" value="0.9">
+    </div>
+
+    <div class="slider-row" style="margin-top: 16px;">
+      <span class="lbl">Uk. Judul/Info</span>
+      <input type="range" id="infoSize" min="0.6" max="1.5" step="0.05" value="0.85">
+    </div>
+  </div>
+
+  <!-- Panggung Utama Ayat -->
+  <!-- TABINDEX TELAH DIHAPUS agar remote TV tidak menyorot elemen teks ini -->
+  <div class="stage" id="stage">
+    <div class="verse" id="verse"><p class="status">Memuat mushaf…</p></div>
+  </div>
+
+  <!-- Dock Kontrol Pemutar -->
+  <div class="dock">
+    <div class="row">
+      <button class="ctl" id="prevSurah" title="Surah Sebelumnya"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
+      <button class="ctl" id="prevAyah" title="Ayat Sebelumnya (←)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      
+      <button class="play" id="play" aria-label="Putar">
+        <svg viewBox="0 0 24 24" fill="currentColor" id="playIcon"><polygon points="8,5 19,12 8,19" /></svg>
+      </button>
+      
+      <button class="ctl" id="nextAyah" title="Ayat Berikutnya (→)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+      <button class="ctl" id="nextSurah" title="Surah Berikutnya"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
+      
+      <div class="meta" id="meta">—</div>
+      
+      <button class="ctl" id="btnRepeat" title="Mode Putar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg></button>
+      <button class="ctl" id="btnFx" title="Suara Alam Ambien (M)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
+    </div>
+    <div class="progress-wrap">
+      <span class="time-lbl" id="curTime">0:00</span>
+      <input type="range" class="progress" id="seek" min="0" max="100" step="0.1" value="0">
+      <span class="time-lbl" id="durTime">0:00</span>
+    </div>
+  </div>
+
+  <audio id="audio" preload="auto"></audio>
+  <button class="fs-float" id="btnFs" title="Layar Penuh (F)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+</div>
+
+<script>
+/* =========================================================
+   PWA SCRIPT (Manifest Lengkap & Service Worker Lolos Standar)
+   ========================================================= */
+let deferredPrompt;
+(function setupPWA() {
+  const manifestJSON = {
+    "name": "Al-Quran Immersive",
+    "short_name": "Quran",
+    "start_url": window.location.pathname || "/",
+    "display": "standalone",
+    "background_color": "#070a09",
+    "theme_color": "#070a09",
+    "icons": [
+      { "src": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23070a09'/%3E%3Ctext y='75' x='18' font-size='60'%3E%F0%9F%93%96%3C/text%3E%3C/svg%3E", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" },
+      { "src": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23070a09'/%3E%3Ctext y='75' x='18' font-size='60'%3E%F0%9F%93%96%3C/text%3E%3C/svg%3E", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
+    ]
+  };
+  const manifestData = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestJSON));
+  document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${manifestData}">`);
+
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+      self.addEventListener('install', e => self.skipWaiting());
+      self.addEventListener('activate', e => self.clients.claim());
+      self.addEventListener('fetch', e => {
+        e.respondWith(fetch(e.request).catch(() => new Response('Tersambung ke Quran', {status: 200})));
+      });
+    `;
+    const swBlob = new Blob([swCode], {type: 'application/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+  }
+
+  // Menangkap Pop-Up Instalasi
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const btn = document.getElementById('btnInstallApp');
+    if (btn) btn.style.display = 'inline-flex';
+  });
+})();
+
+document.getElementById('btnInstallApp').addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') document.getElementById('btnInstallApp').style.display = 'none';
+    deferredPrompt = null;
+  }
+});
+
+/* =========================================================
+   VARIABEL & SETUP APLIKASI
+   ========================================================= */
+const KEY = "quran-immersive-v15";
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const ICONS = {
+  play: `<polygon points="8,5 19,12 8,19" />`,
+  pause: `<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`,
+  fsEnter: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>`,
+  fsExit: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>`,
+  repeatAll: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>`,
+  repeatOne: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z"/></svg>`,
+  repeatSurah: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>`
+};
+
+function safeParse(s) { try { return JSON.parse(s) || {}; } catch (e) { return {}; } }
+
+let surahsList = [];
+let state = Object.assign({
+  last: 1, lastAyah: 0, reciter: "Alafasy_128kbps", 
+  apiSource: "equran",
+  scene: "night", customBg: "",
+  fontAr: "'Amiri', serif", fontId: "'Plus Jakarta Sans', sans-serif",
+  arScale: 1, idScale: 0.9, infoScale: 0.85, vol: 0.5, repeat: "all", sounds: ["rain"]
+}, safeParse(localStorage.getItem(KEY)));
+
+let surah = null; let idx = 0; let playing = false; let swapTimer = null;
+
+function saveState() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function fmtTime(sec) { if (!sec || !isFinite(sec)) return "0:00"; const m = Math.floor(sec / 60); const s = Math.floor(sec % 60); return `${m}:${s < 10 ? "0" : ""}${s}`; }
+function pad3(n) { return String(n).padStart(3, '0'); }
+
+/* ---------- Generator Latar Animasi Bergerak ---------- */
+const SVG_SCENES = {
+  night: { sky: ["#060b1a", "#142344", "#2b3f6b"], body: "#03060d", kind: "night" },
+  dawn:  { sky: ["#24274d", "#b56567", "#f2b880"], body: "#241c2e", kind: "sun" },
+  mosque:{ sky: ["#161430", "#633859", "#de8456"], body: "#0e0a1a", kind: "mosque" },
+  forest:{ sky: ["#173024", "#4e735b", "#cfe0ba"], body: "#08170e", kind: "forest" },
+  sea:   { sky: ["#174363", "#62a6bd", "#f2e0b3"], body: "#113847", kind: "sea" }
+};
+
+function renderScene(key) {
+  const s = SVG_SCENES[key] || SVG_SCENES.night;
+  let layers = "";
+
+  if (s.kind === "night") {
+    layers += Array.from({length: 130}, (_, i) => `<circle class="twinkle" cx="${(i*197)%1600}" cy="${(i*89)%600}" r="${(i%5)*0.35+0.5}" fill="#fff" style="animation-delay:${(i*0.37%4).toFixed(2)}s; animation-duration:${3+(i%3)}s"/>`).join("");
+    layers += `<circle cx="1250" cy="200" r="75" fill="#fdfae8" filter="drop-shadow(0 0 50px #fdfae8)"/>`;
+    layers += `<line class="shooting-star" x1="1400" y1="50" x2="1000" y2="450" stroke="url(#shoot-grad)" stroke-width="2.5" style="animation-delay: 4s;"/>`;
+  }
+  if (s.kind === "sun") {
+    layers += `<circle class="sun-pulse" cx="1250" cy="350" r="140" fill="#ffd9a0" filter="drop-shadow(0 0 60px #ffb347)"/>`;
+    layers += `<g class="fly-across" fill="${s.body}" style="animation-duration: 45s;"><path d="M0 250 Q20 220 40 250 Q20 240 0 250 Z"/><path d="M-30 280 Q-10 250 10 280 Q-10 270 -30 280 Z"/></g>`;
+    layers += `<g class="fly-across" fill="#fff" opacity="0.1" style="animation-duration: 60s;"><rect x="0" y="100" width="300" height="30" rx="15"/><rect x="80" y="80" width="150" height="20" rx="10"/></g>`;
+  }
+  if (s.kind === "mosque") {
+    layers += `<circle class="sun-pulse" cx="1200" cy="180" r="66" fill="#f6eedb" filter="drop-shadow(0 0 40px #de8456)"/>`;
+    layers += `<path d="M1160 140 A50 50 0 1 0 1210 190 A60 60 0 1 1 1160 140 Z" fill="#e9c98a"/>`;
+    layers += `<g class="fly-across" fill="#fff" opacity="0.08" style="animation-duration: 55s;"><rect x="0" y="150" width="300" height="40" rx="20"/><rect x="50" y="120" width="200" height="40" rx="20"/></g>`;
+    layers += `<g fill="${s.body}"><path d="M540 580 Q590 350 640 580 Z"/><path d="M820 580 Q870 300 920 580 Z"/><rect x="500" y="580" width="560" height="140"/><rect x="586" y="320" width="18" height="70"/><rect x="866" y="250" width="18" height="70"/></g>`;
+  }
+  if (s.kind === "forest") {
+    layers += `<circle cx="1150" cy="350" r="100" fill="#fff3d2" opacity="0.6" filter="drop-shadow(0 0 60px #fff3d2)"/>`;
+    layers += Array.from({length: 16}, (_, i) => `<path class="sway" d="M${i*110+(i%3)*30} 720 L${i*110+(i%3)*30+45} 350 L${i*110+(i%3)*30+90} 720Z" fill="#0b1b13" opacity="0.95" style="animation-delay: -${(i%4)*0.5}s;"/>`).join("");
+    layers += `<g class="fly-across" fill="#fff" opacity="0.05" style="animation-duration: 65s;"><rect x="0" y="200" width="400" height="60" rx="30"/></g>`;
+    layers += Array.from({length: 25}, (_, i) => `<circle class="firefly" cx="${(i*137)%1600}" cy="${500+(i*29)%200}" r="2" style="animation-delay: ${(i%5)}s;"/>`).join("");
+  }
+  if (s.kind === "sea") {
+    layers += `<circle class="sun-pulse" cx="1100" cy="280" r="100" fill="#fff3d2" filter="drop-shadow(0 0 50px #fff3d2)"/>`;
+    layers += `<g class="fly-across" fill="#fff" opacity="0.12" style="animation-duration: 50s;"><circle cx="0" cy="150" r="40"/><circle cx="50" cy="150" r="50"/><circle cx="100" cy="160" r="35"/></g>`;
+  }
+
+  const groundY = s.kind === "sea" ? 640 : 660;
+  if (s.kind === "sea") {
+    layers += `<path class="wave-back" d="M-100 ${groundY-20} Q300 ${groundY-90} 700 ${groundY-20} T1700 ${groundY-20} L1700 900 L-100 900Z" fill="#0a202b" opacity="0.9"/>`;
+    layers += `<path class="wave-mid" d="M-100 ${groundY} Q400 ${groundY-60} 800 ${groundY} T1700 ${groundY} L1700 900 L-100 900Z" fill="#0c2936" opacity="0.9"/>`;
+    layers += `<path class="wave-front" d="M-100 ${groundY+30} Q400 ${groundY-40} 800 ${groundY+30} T1700 ${groundY+30} L1700 900 L-100 900Z" fill="${s.body}"/>`;
+  } else {
+    layers += `<path class="drift" d="M-100 ${groundY-40} Q300 ${groundY-90} 600 ${groundY-40} T1300 ${groundY-50} T1700 ${groundY-40} L1700 900 L-100 900Z" fill="${s.body}" opacity="0.6"/>`;
+    layers += `<path class="drift" d="M-100 ${groundY} Q400 ${groundY-30} 800 ${groundY} T1700 ${groundY} L1700 900 L-100 900Z" fill="${s.body}" style="animation-delay: -10s;"/>`;
+  }
+
+  return `<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.sky[0]}"/><stop offset=".5" stop-color="${s.sky[1]}"/><stop offset="1" stop-color="${s.sky[2]}"/></linearGradient>
+      <linearGradient id="shoot-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#sky)"/>
+    ${layers}
+  </svg>`;
+}
+
+function applyWallpaper(mode, keyOrUrl) {
+  if (mode === "svg") {
+    state.scene = keyOrUrl; state.customBg = ""; saveState();
+    $("scene").style.opacity = 0;
+    setTimeout(() => {
+      $("scene").innerHTML = renderScene(keyOrUrl);
+      $("scene").style.opacity = 1; $("scene-custom").style.opacity = 0;
+    }, 300);
+    document.querySelectorAll("#sceneChips .chip").forEach(c => c.classList.toggle("on", c.dataset.q === keyOrUrl));
+  } else {
+    state.customBg = keyOrUrl; saveState();
+    $("scene-custom").style.backgroundImage = `url('${keyOrUrl}')`;
+    $("scene-custom").style.opacity = 1; $("scene").style.opacity = 0;
+    document.querySelectorAll("#sceneChips .chip").forEach(c => c.classList.remove("on"));
+  }
+}
+
+document.querySelectorAll("#sceneChips .chip").forEach(btn => btn.onclick = () => applyWallpaper("svg", btn.dataset.q));
+
+/* ---------- Pinterest / Custom Wallpaper Extractor ---------- */
+$("btnWallSearch").onclick = async () => {
+  let url = $("wallInput").value.trim();
+  if(!url) return;
+
+  $("btnWallSearch").textContent = "Mencari...";
+  $("btnWallSearch").style.background = "#fff";
+
+  if (url.includes("pin.it") || url.includes("pinterest.com")) {
+    try {
+      const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+      const data = await res.json();
+      const html = data.contents;
+      
+      const match = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i) || 
+                    html.match(/<meta[^>]+name="og:image"[^>]+content="([^"]+)"/i) ||
+                    html.match(/<meta[^>]+content="([^"]+)"[^>]+property="og:image"/i);
+      
+      if (match && match[1]) {
+        url = match[1];
+      } else {
+        throw new Error("Gambar tidak ditemukan");
+      }
+    } catch (e) {
+      $("btnWallSearch").textContent = "Gagal Akses";
+      $("btnWallSearch").style.background = "#ffb3b3";
+      setTimeout(()=> { $("btnWallSearch").textContent = "Terapkan"; $("btnWallSearch").style.background = "var(--gold)"; }, 2000);
+      return;
+    }
+  }
+
+  applyWallpaper("img", url);
+  $("btnWallSearch").textContent = "Diterapkan";
+  $("btnWallSearch").style.background = "var(--gold)";
+  setTimeout(()=> $("btnWallSearch").textContent = "Terapkan", 2000);
+};
+
+/* ---------- Audio Alam (DOM) ---------- */
+const SOUND_LABELS = { rain: "🌧 Hujan", thunder: "⛈ Petir", river: "🌊 Air", forest: "🦗 Hutan", fire: "🔥 Api Unggun" };
+const activeAudios = {};
+
+function toggleSound(key, on, savePref = true) {
+  const audioEl = document.getElementById("audio-" + key);
+  if (!audioEl) return;
+  
+  if (on && !activeAudios[key]) {
+    audioEl.volume = 0; 
+    const playPromise = audioEl.play();
+    if (playPromise !== undefined) playPromise.catch(e => console.log("Audio diblokir sementara."));
+    
+    const obj = { audio: audioEl, fadeInterval: setInterval(() => {
+      let v = obj.audio.volume + 0.05;
+      if (v >= state.vol) { v = state.vol; clearInterval(obj.fadeInterval); }
+      obj.audio.volume = v;
+    }, 200)};
+    activeAudios[key] = obj;
+  } else if (!on && activeAudios[key]) {
+    const obj = activeAudios[key]; delete activeAudios[key];
+    clearInterval(obj.fadeInterval);
+    const fadeOut = setInterval(() => {
+      let v = obj.audio.volume - 0.05;
+      if (v <= 0) { v = 0; clearInterval(fadeOut); obj.audio.pause(); }
+      else { obj.audio.volume = v; }
+    }, 200);
+  }
+  
+  const keys = Object.keys(activeAudios);
+  if (savePref) { state.sounds = keys; saveState(); }
+  document.querySelectorAll("#soundChips .chip").forEach(c => c.classList.toggle("on", !!activeAudios[c.dataset.k]));
+  $("btnFx").classList.toggle("fx-on", keys.length > 0);
+}
+
+$("btnFx").onclick = () => {
+  const keys = Object.keys(activeAudios);
+  if (keys.length > 0) keys.forEach(k => toggleSound(k, false, false));
+  else (state.sounds.length ? state.sounds : ["rain"]).forEach(k => toggleSound(k, true, true));
+};
+$("fxVol").addEventListener("input", e => {
+  state.vol = Number(e.target.value); saveState();
+  Object.values(activeAudios).forEach(obj => { if (obj.audio) obj.audio.volume = state.vol; });
+});
+
+/* ---------- Inisialisasi UI ---------- */
+async function init() {
+  if(state.customBg) applyWallpaper("img", state.customBg);
+  else applyWallpaper("svg", state.scene);
+  
+  $("fxVol").value = state.vol;
+  ["fontAr", "fontId", "arSize", "idSize", "infoSize", "reciter", "apiSource"].forEach(id => {
+    if ($(id).querySelector(`option[value="${state[id]}"]`) || $(id).type === "range") $(id).value = state[id];
+  });
+  applyUI(); updateRepeatUI();
+  
+  Object.keys(SOUND_LABELS).forEach(k => {
+    const b = document.createElement("button"); b.className = "chip"; b.dataset.k = k; b.textContent = SOUND_LABELS[k];
+    b.onclick = () => toggleSound(k, !activeAudios[k], true); $("soundChips").appendChild(b);
+  });
+
+  await fetchDaftarSurah();
+}
+
+function applyUI() {
+  state.arScale = Number($("arSize").value); 
+  state.idScale = Number($("idSize").value);
+  state.infoScale = Number($("infoSize").value);
+  state.fontAr = $("fontAr").value; 
+  state.fontId = $("fontId").value; 
+  state.apiSource = $("apiSource").value;
+  saveState();
+  
+  document.documentElement.style.setProperty("--ar-scale", state.arScale);
+  document.documentElement.style.setProperty("--id-scale", state.idScale);
+  document.documentElement.style.setProperty("--info-scale", state.infoScale);
+  document.documentElement.style.setProperty("--font-ar", state.fontAr);
+  document.documentElement.style.setProperty("--font-id", state.fontId);
+}
+["arSize","idSize","infoSize","fontAr","fontId"].forEach(id => $(id).addEventListener("input", applyUI));
+$("apiSource").addEventListener("change", () => { applyUI(); fetchDaftarSurah(); });
+
+/* ---------- Fetcher Opsi API Al-Quran ---------- */
+async function fetchDaftarSurah() {
+  try {
+    let listHTML = "";
+    if (state.apiSource === "equran") {
+      const res = await fetch("https://equran.id/api/v2/surat");
+      surahsList = (await res.json()).data;
+      listHTML = surahsList.map(s => `<option value="${s.nomor}">${s.nomor}. ${esc(s.namaLatin)}</option>`).join("");
+    } else if (state.apiSource === "quranjson") {
+      const res = await fetch("https://raw.githubusercontent.com/penggguna/QuranJSON/master/quran.json");
+      surahsList = await res.json();
+      listHTML = surahsList.map(s => `<option value="${s.number_of_surah}">${s.number_of_surah}. ${esc(s.name)}</option>`).join("");
+    } else { 
+      const res = await fetch("https://api.alquran.cloud/v1/surah");
+      surahsList = (await res.json()).data;
+      listHTML = surahsList.map(s => `<option value="${s.number}">${s.number}. ${esc(s.englishName)}</option>`).join("");
+    }
+    $("surahSel").innerHTML = listHTML;
+    await loadSurah(state.last || 1, state.lastAyah || 0);
+  } catch (e) { $("verse").innerHTML = '<p class="status">Gagal memuat API. Periksa internet atau ganti API.</p>'; }
+}
+
+async function loadSurah(n, startIdx = 0) {
+  n = Math.max(1, Math.min(114, Number(n) || 1)); state.last = n; saveState();
+  $("surahSel").value = n; $("verse").classList.remove("hide"); $("verse").innerHTML = '<p class="status">Memuat ayat...</p>';
+  try {
+    let sData = { n, name: "", englishName: "", arti: "", count: 0, type: "", ayahs: [] };
+    
+    if (state.apiSource === "equran") {
+      const j = (await (await fetch(`https://equran.id/api/v2/surat/${n}`)).json()).data;
+      sData = { n, name: j.nama, englishName: j.namaLatin, arti: j.arti, count: j.jumlahAyat, type: j.tempatTurun,
+        ayahs: j.ayat.map(a => ({ numInSurah: a.nomorAyat, ar: a.teksArab, id: a.teksIndonesia })) };
+    } 
+    else if (state.apiSource === "quranjson") {
+      const j = await (await fetch(`https://raw.githubusercontent.com/penggguna/QuranJSON/master/surah/${n}.json`)).json();
+      sData = { n, name: j.name_translations.ar, englishName: j.name, arti: j.name_translations.id, count: j.number_of_ayah, type: j.place,
+        ayahs: j.verses.map(a => ({ numInSurah: a.number, ar: a.text, id: a.translation_id })) };
+    } 
+    else { 
+      const j = (await (await fetch(`https://api.alquran.cloud/v1/surah/${n}/editions/quran-uthmani,id.indonesian`)).json()).data;
+      const [ar, id] = j;
+      sData = { n, name: ar.name, englishName: ar.englishName, arti: ar.englishNameTranslation, count: ar.numberOfAyahs, type: ar.revelationType === "Meccan" ? "Makkiyah" : "Madaniyah",
+        ayahs: ar.ayahs.map((a, i) => ({ numInSurah: a.numberInSurah, ar: a.text, id: id.ayahs[i].text })) };
+    }
+    
+    if (n !== 1 && n !== 9 && sData.ayahs[0].ar.startsWith("بِسْمِ")) {
+      sData.ayahs[0].ar = sData.ayahs[0].ar.replace(/^بِسْمِ\s+\S+\s+\S+\s+\S+\s+/u,"").trim();
+    }
+    
+    surah = sData;
+    $("ayahSel").innerHTML = surah.ayahs.map((a, i) => `<option value="${i}">Ayat ${a.numInSurah}</option>`).join("");
+    showAyah(startIdx < 0 ? surah.ayahs.length - 1 : Math.min(startIdx, surah.ayahs.length - 1));
+  } catch (e) { $("verse").innerHTML = '<p class="status">Gagal memuat surah.</p>'; }
+}
+
+function showAyah(i) {
+  if (!surah) return; clearTimeout(swapTimer); idx = Math.max(0, Math.min(i, surah.ayahs.length - 1));
+  state.lastAyah = idx; saveState(); $("ayahSel").value = idx;
+  const a = surah.ayahs[idx];
+  
+  const head = idx === 0 ? `
+    <p class="surah-title">Surah ${esc(surah.englishName)}</p>
+    <p class="surah-sub">${esc(surah.type)} · ${surah.count} Ayat · "${esc(surah.arti)}"</p>
+    ${surah.n!==1&&surah.n!==9?'<div class="bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>':""}` : "";
+    
+  const commit = () => {
+    $("verse").innerHTML = `
+      ${head}
+      <p class="ar-text">${a.ar}</p>
+      <p class="id-text">${esc(a.id)}</p>
+      <div class="ayah-footer">
+        <span>QS. ${esc(surah.englishName)} : Ayat ${a.numInSurah} / ${surah.count}</span>
+      </div>`;
+      
+    // Tabindex Dihapus dari Verse, Scroll dilakukan secara global
+    $("stage").scrollTop = 0; $("verse").classList.remove("hide");
+    
+    const qoriID = $("reciter").value;
+    $("audio").src = `https://everyayah.com/data/${qoriID}/${pad3(surah.n)}${pad3(a.numInSurah)}.mp3`;
+    
+    $("meta").textContent = `${surah.n}. ${surah.englishName} : ${a.numInSurah}`;
+    if (playing) $("audio").play().catch(()=>setPlaying(false));
+  };
+  if (!$("verse").querySelector(".status")) { $("verse").classList.add("hide"); swapTimer = setTimeout(commit, 350); } else commit();
+}
+
+function setPlaying(p) {
+  playing = p; 
+  $("playIcon").innerHTML = p ? ICONS.pause : ICONS.play;
+  $("play").classList.toggle("is-playing", p);
+}
+$("play").onclick = () => {
+  const a = $("audio"); if (playing) { a.pause(); setPlaying(false); }
+  else { setPlaying(true); a.play().catch(()=>setPlaying(false)); }
+};
+$("audio").onended = () => {
+  if (!playing) return;
+  if (state.repeat === "one") { $("audio").currentTime = 0; $("audio").play().catch(()=>setPlaying(false)); }
+  else nextAyah();
+};
+$("audio").ontimeupdate = () => {
+  if ($("audio").duration) {
+    $("seek").value = ($("audio").currentTime / $("audio").duration) * 100;
+    $("curTime").textContent = fmtTime($("audio").currentTime); $("durTime").textContent = fmtTime($("audio").duration);
+  }
+};
+$("seek").oninput = e => $("audio").duration && ($("audio").currentTime = (e.target.value / 100) * $("audio").duration);
+
+const nextAyah = () => { if(idx < surah.ayahs.length-1) showAyah(idx+1); else if(state.repeat === "surah") showAyah(0); else if(surah.n < 114) loadSurah(surah.n+1, 0); else setPlaying(false); };
+const prevAyah = () => { if(idx > 0) showAyah(idx-1); else if(surah.n > 1) loadSurah(surah.n-1, -1); };
+
+$("nextAyah").onclick = nextAyah; $("prevAyah").onclick = prevAyah;
+$("nextSurah").onclick = () => surah && surah.n < 114 && loadSurah(surah.n+1, 0);
+$("prevSurah").onclick = () => surah && surah.n > 1 && loadSurah(surah.n-1, 0);
+$("surahSel").onchange = e => loadSurah(e.target.value, 0);
+$("ayahSel").onchange = e => showAyah(Number(e.target.value));
+$("reciter").onchange = e => { state.reciter = e.target.value; saveState(); if(surah) showAyah(idx); };
+
+function updateRepeatUI() {
+  const modes = { all: ICONS.repeatAll, one: ICONS.repeatOne, surah: ICONS.repeatSurah };
+  $("btnRepeat").innerHTML = modes[state.repeat]; $("btnRepeat").classList.toggle("fx-on", state.repeat !== "all");
+}
+$("btnRepeat").onclick = () => { const m = ["all","one","surah"]; state.repeat = m[(m.indexOf(state.repeat)+1)%3]; saveState(); updateRepeatUI(); };
+
+/* ---------- Layar Penuh & Navigasi Remote TV Global ---------- */
+$("btnPanel").onclick = e => { e.stopPropagation(); $("panel").classList.toggle("open"); $("btnPanel").classList.toggle("active"); };
+$("btnClosePanel").onclick = () => { $("panel").classList.remove("open"); $("btnPanel").classList.remove("active"); };
+
+document.addEventListener("click", e => { if (!e.target.closest("#panel") && !e.target.closest("#btnPanel")) { $("panel").classList.remove("open"); $("btnPanel").classList.remove("active"); }});
+$("btnFs").onclick = () => {
+  const on = !document.body.classList.contains("immersive");
+  document.body.classList.toggle("immersive", on); $("btnFs").innerHTML = on ? ICONS.fsExit : ICONS.fsEnter;
+  if(on) document.documentElement.requestFullscreen?.().catch(()=>{}); else document.exitFullscreen?.().catch(()=>{});
+};
+
+/* Event Listener Keyboard & D-Pad Remote TV yang Diperbaiki */
+document.addEventListener("keydown", e => {
+  const activeTag = document.activeElement?.tagName;
+  const isInput = ["INPUT", "SELECT", "TEXTAREA"].includes(activeTag);
+
+  // Jangan ganggu fungsi panah atas/bawah jika sedang memilih pengaturan (dropdown/slider)
+  if (isInput && (e.key === "ArrowUp" || e.key === "ArrowDown")) return;
+
+  // Tombol Spasi (di Keyboard) selalu Play/Pause
+  if (e.code === "Space") {
+    e.preventDefault();
+    $("play").click();
+  }
+  // Tombol OK / Enter (di Remote TV)
+  else if (e.key === "Enter") {
+    // Jika sorotan sedang *TIDAK* berada di atas tombol interaktif, maka jadikan OK sebagai Play/Pause
+    if (activeTag !== "BUTTON" && activeTag !== "SELECT" && activeTag !== "INPUT") {
+      e.preventDefault();
+      $("play").click();
+    }
+    // (Jika sedang menyorot "Next", browser akan mengkliknya secara otomatis)
+  }
+  else if (e.key === "ArrowRight" || e.key === "MediaNextTrack") {
+    if (!isInput) { e.preventDefault(); nextAyah(); }
+  }
+  else if (e.key === "ArrowLeft" || e.key === "MediaPreviousTrack") {
+    if (!isInput) { e.preventDefault(); prevAyah(); }
+  }
+  else if (e.key === "ArrowUp") {
+    if (!isInput) { e.preventDefault(); $("stage").scrollBy({top: -80, behavior: 'smooth'}); }
+  }
+  else if (e.key === "ArrowDown") {
+    if (!isInput) { e.preventDefault(); $("stage").scrollBy({top: 80, behavior: 'smooth'}); }
+  }
+  else if (e.key === "f" || e.key === "F") $("btnFs").click();
+  else if (e.key === "m" || e.key === "M") $("btnFx").click();
+});
+
+init();
+</script>
+</body>
+</html>
+
