@@ -48,8 +48,8 @@
   #scene-custom { background-size: cover; background-position: center; opacity: 0; }
   .overlay { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.88) 100%); }
 
-  .twinkle { animation: twinkle 3s ease-in-out infinite alternate; }
-  @keyframes twinkle { 0% { opacity: 0.15; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.1); } }
+  .twinkle { animation: twinkle 3s ease-in-out infinite; }
+  @keyframes twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
   .firefly { animation: firefly 4s ease-in-out infinite alternate; fill: #e9c98a; filter: drop-shadow(0 0 6px #e9c98a); }
   @keyframes firefly { 0% { opacity: 0; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-15px); } 100% { opacity: 0; transform: translateY(-30px); } }
   .drift { animation: drift 35s ease-in-out infinite alternate; }
@@ -66,8 +66,13 @@
   @keyframes waveM { from { transform: translateX(2%) translateY(0); } to { transform: translateX(-2%) translateY(-15px); } }
   .wave-front { animation: waveF 5s ease-in-out infinite alternate; }
   @keyframes waveF { from { transform: translateX(-3%) translateY(0); } to { transform: translateX(3%) translateY(-8px); } }
-  .shooting-star { animation: shoot 12s linear infinite; stroke-dasharray: 400; stroke-dashoffset: 400; }
-  @keyframes shoot { 0%, 50% { stroke-dashoffset: 400; opacity: 0; transform: translate(0,0); } 55% { stroke-dashoffset: 0; opacity: 1; transform: translate(-300px, 300px); } 100% { opacity: 0; } }
+  .shooting-star { animation: shoot 12s linear infinite; stroke-dasharray: 400; stroke-dashoffset: 400; opacity: 0; }
+  @keyframes shoot {
+    0%, 42% { stroke-dashoffset: 400; opacity: 0; transform: translate(0, 0); }
+    48% { stroke-dashoffset: 0; opacity: 1; transform: translate(0, 0); }
+    62% { stroke-dashoffset: -400; opacity: 0.9; transform: translate(-180px, 180px); }
+    72%, 100% { stroke-dashoffset: -400; opacity: 0; transform: translate(-300px, 300px); }
+  }
 
   /* ---------- Layout Utama ---------- */
   #app { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; }
@@ -530,32 +535,166 @@ function renderScene(key) {
     layers += `<line class="shooting-star" x1="1400" y1="50" x2="1000" y2="450" stroke="url(#shoot-grad)" stroke-width="2.5" style="animation-delay: 4s;"/>`;
   }
   if (s.kind === "sun") {
-    layers += `<circle class="sun-pulse" cx="1250" cy="350" r="140" fill="#ffd9a0" filter="drop-shadow(0 0 60px #ffb347)"/>`;
-    layers += `<g class="fly-across" fill="${s.body}" style="animation-duration: 45s;"><path d="M0 250 Q20 220 40 250 Q20 240 0 250 Z"/><path d="M-30 280 Q-10 250 10 280 Q-10 270 -30 280 Z"/></g>`;
-    layers += `<g class="fly-across" fill="#fff" opacity="0.1" style="animation-duration: 60s;"><rect x="0" y="100" width="300" height="30" rx="15"/><rect x="80" y="80" width="150" height="20" rx="10"/></g>`;
+    // Matahari terbit di balik cakrawala + halo berlapis
+    layers += `<circle cx="1080" cy="430" r="200" fill="#ffb347" opacity="0.14"/>`;
+    layers += `<circle cx="1080" cy="430" r="140" fill="#ffc76b" opacity="0.22"/>`;
+    layers += `<circle class="sun-pulse" cx="1080" cy="430" r="86" fill="#fff0c4" filter="drop-shadow(0 0 55px #ffb347)"/>`;
+    // Pita cahaya fajar di langit
+    layers += `<g class="drift" style="animation-duration: 90s; opacity: 0.35;"><rect x="0" y="330" width="1600" height="26" rx="13" fill="#ffd9a0"/><rect x="0" y="382" width="1600" height="16" rx="8" fill="#ffc9a0" opacity="0.7"/></g>`;
+    // Awan senja berlapis
+    layers += `<g class="drift" style="animation-duration: 120s; opacity: 0.3;" fill="#ffd0b0"><ellipse cx="330" cy="250" rx="120" ry="30"/><ellipse cx="430" cy="240" rx="90" ry="24"/><ellipse cx="250" cy="258" rx="70" ry="20"/></g>`;
+    layers += `<g class="drift" style="animation-duration: 150s; animation-delay: -40s; opacity: 0.22;" fill="#ffe0c0"><ellipse cx="1180" cy="200" rx="140" ry="26"/><ellipse cx="1290" cy="192" rx="95" ry="20"/></g>`;
+    layers += `<g class="drift" style="animation-duration: 180s; animation-delay: -90s; opacity: 0.16;" fill="#ffd9c0"><ellipse cx="760" cy="150" rx="170" ry="22"/><ellipse cx="900" cy="144" rx="110" ry="18"/></g>`;
+    // Burung camar melintas (dua kelompok, arah berbeda)
+    layers += `<g class="fly-across" style="animation-duration: 55s; animation-delay: -10s;" fill="none" stroke="${s.body}" stroke-width="2.6" stroke-linecap="round" opacity="0.6"><path d="M0 250 q14 -12 28 0"/><path d="M28 250 q14 -12 28 0"/><path d="M-52 284 q11 -9 22 0"/><path d="M-30 284 q11 -9 22 0"/></g>`;
+    layers += `<g class="fly-across" style="animation-duration: 90s; animation-delay: -55s;" fill="none" stroke="${s.body}" stroke-width="2" stroke-linecap="round" opacity="0.4"><path d="M0 180 q10 -9 20 0"/><path d="M20 180 q10 -9 20 0"/></g>`;
+    // Bukit berlapis di cakrawala
+    layers += `<path d="M-100 660 Q180 545 420 620 Q640 690 900 600 Q1160 512 1700 630 L1700 900 L-100 900 Z" fill="#3a2a3f" opacity="0.75"/>`;
+    layers += `<path d="M-100 700 Q260 605 520 665 Q800 730 1080 650 Q1380 566 1700 690 L1700 900 L-100 900 Z" fill="#2a1e30" opacity="0.9"/>`;
+    // Danau + pantulan matahari
+    layers += `<path d="M-100 742 Q400 716 800 742 T1700 742 L1700 900 L-100 900 Z" fill="#241a2c"/>`;
+    layers += `<g class="drift" style="animation-duration: 70s; opacity: 0.5;"><rect x="1010" y="756" width="140" height="5" rx="2.5" fill="#ffcf8a"/><rect x="1035" y="774" width="90" height="4" rx="2" fill="#ffcf8a" opacity="0.8"/><rect x="1055" y="790" width="120" height="4" rx="2" fill="#ffcf8a" opacity="0.6"/><rect x="1020" y="806" width="70" height="3" rx="1.5" fill="#ffcf8a" opacity="0.45"/></g>`;
+    // Siluet pepohonan kecil di tepi danau
+    layers += `<g fill="#1a1220" opacity="0.9"><path d="M250 742 L266 690 L282 742 Z"/><path d="M300 742 L312 706 L324 742 Z"/><path d="M360 742 L376 684 L392 742 Z"/><path d="M1340 742 L1356 692 L1372 742 Z"/><path d="M1396 742 L1408 708 L1420 742 Z"/></g>`;
   }
   if (s.kind === "mosque") {
-    layers += `<circle class="sun-pulse" cx="1200" cy="180" r="66" fill="#f6eedb" filter="drop-shadow(0 0 40px #de8456)"/>`;
-    layers += `<path d="M1160 140 A50 50 0 1 0 1210 190 A60 60 0 1 1 1160 140 Z" fill="#e9c98a"/>`;
-    layers += `<g class="fly-across" fill="#fff" opacity="0.08" style="animation-duration: 55s;"><rect x="0" y="150" width="300" height="40" rx="20"/><rect x="50" y="120" width="200" height="40" rx="20"/></g>`;
-    layers += `<g fill="${s.body}"><path d="M540 580 Q590 350 640 580 Z"/><path d="M820 580 Q870 300 920 580 Z"/><rect x="500" y="580" width="560" height="140"/><rect x="586" y="320" width="18" height="70"/><rect x="866" y="250" width="18" height="70"/></g>`;
+    // Bulan sabit + cahaya lembut malam
+    layers += `<circle cx="1200" cy="150" r="58" fill="#f6eedb" opacity="0.9"/>`;
+    layers += `<path d="M1175 118 A44 44 0 1 0 1220 182 A52 52 0 1 1 1175 118 Z" fill="#161430"/>`;
+    // Bintang berkelip
+    layers += `<g class="twinkle" style="animation-duration: 3.2s;"><circle cx="980" cy="90" r="1.2" fill="#fff"/><circle cx="1040" cy="70" r="1" fill="#fff"/><circle cx="1120" cy="95" r="1.4" fill="#fff"/><circle cx="1260" cy="65" r="1" fill="#fff"/><circle cx="1340" cy="85" r="1.2" fill="#fff"/></g>`;
+    layers += `<g class="twinkle" style="animation-duration: 4s; animation-delay: 1.2s;"><circle cx="1005" cy="110" r="0.8" fill="#fff"/><circle cx="1085" cy="80" r="0.9" fill="#fff"/><circle cx="1175" cy="105" r="0.8" fill="#fff"/><circle cx="1295" cy="95" r="0.9" fill="#fff"/><circle cx="1385" cy="75" r="0.8" fill="#fff"/></g>`;
+    // Awan bergerak lambat
+    layers += `<g class="drift" style="animation-duration: 90s; opacity: 0.12;"><ellipse cx="200" cy="170" rx="90" ry="26"/><ellipse cx="260" cy="165" rx="70" ry="20"/><ellipse cx="150" cy="175" rx="60" ry="18"/></g>`;
+    layers += `<g class="drift" style="animation-duration: 120s; animation-direction: reverse; opacity: 0.1;"><ellipse cx="900" cy="140" rx="110" ry="28"/><ellipse cx="980" cy="135" rx="80" ry="22"/><ellipse cx="840" cy="145" rx="70" ry="20"/></g>`;
+    // Lapisan bukit untuk kedalaman
+    layers += `<g fill="#120f26"><path d="M0 620 Q200 520 420 620 L420 720 L0 720 Z"/><path d="M320 620 Q520 480 720 620 L720 720 L320 720 Z"/><path d="M620 620 Q820 500 1020 620 L1020 720 L620 720 Z"/><path d="M920 620 Q1120 520 1440 620 L1440 720 L920 720 Z"/></g>`;
+    // ===== BANGUNAN MASJID =====
+    // Badan utama (aula) + dinding dasar
+    layers += `<g fill="${s.body}">
+      <rect x="500" y="560" width="620" height="160"/>
+      <rect x="470" y="690" width="680" height="30" rx="6"/>
+    </g>`;
+    // Lengkungan mihrab/portal di tengah
+    layers += `<g fill="#1b1533">
+      <path d="M770 720 L770 640 A40 40 0 0 1 850 640 L850 720 Z"/>
+      <path d="M700 720 L700 660 A26 26 0 0 1 752 660 L752 720 Z"/>
+      <path d="M868 720 L868 660 A26 26 0 0 1 920 660 L920 720 Z"/>
+    </g>`;
+    // Jendela kisi bercahaya keemasan
+    layers += `<g fill="#f5d16e" opacity="0.85">
+      <rect x="612" y="600" width="16" height="34" rx="7"/>
+      <rect x="646" y="600" width="16" height="34" rx="7"/>
+      <rect x="958" y="600" width="16" height="34" rx="7"/>
+      <rect x="992" y="600" width="16" height="34" rx="7"/>
+    </g>`;
+    // Drum + kubah utama (bawang) + finial bulan sabit
+    layers += `<g fill="${s.body}">
+      <rect x="700" y="520" width="220" height="46" rx="8"/>
+      <path d="M700 524 C700 452 742 428 810 396 C878 428 920 452 920 524 Z"/>
+      <path d="M810 396 C810 380 812 372 818 362 L802 362 C808 372 810 380 810 396 Z"/>
+    </g>`;
+    layers += `<circle cx="810" cy="356" r="7" fill="#f5d16e" opacity="0.95"/>`;
+    // Kubah pendamping kiri & kanan
+    layers += `<g fill="${s.body}">
+      <path d="M540 560 C540 512 566 498 596 480 C626 498 652 512 652 560 Z"/>
+      <path d="M968 560 C968 512 994 498 1024 480 C1054 498 1080 512 1080 560 Z"/>
+    </g>`;
+    // Dua menara berundak + kubah kecil + bulan sabit
+    layers += `<g fill="${s.body}">
+      <rect x="452" y="470" width="34" height="250" rx="4"/>
+      <rect x="444" y="440" width="50" height="34" rx="5"/>
+      <rect x="448" y="404" width="42" height="40" rx="5"/>
+      <path d="M448 406 C448 378 462 368 469 356 C476 368 490 378 490 406 Z"/>
+      <rect x="1124" y="470" width="34" height="250" rx="4"/>
+      <rect x="1116" y="440" width="50" height="34" rx="5"/>
+      <rect x="1120" y="404" width="42" height="40" rx="5"/>
+      <path d="M1120 406 C1120 378 1134 368 1141 356 C1148 368 1162 378 1162 406 Z"/>
+    </g>`;
+    layers += `<g fill="#f5d16e" opacity="0.9">
+      <circle cx="469" cy="352" r="5"/><circle cx="1141" cy="352" r="5"/>
+    </g>`;
+    // Jendela menara
+    layers += `<g fill="#f5d16e" opacity="0.75">
+      <rect x="462" y="500" width="14" height="22" rx="6"/>
+      <rect x="1134" y="500" width="14" height="22" rx="6"/>
+    </g>`;
+    // Awan tipis dekat atap
+    layers += `<g class="drift" style="animation-duration: 150s; opacity: 0.08;"><ellipse cx="650" cy="480" rx="60" ry="16"/><ellipse cx="700" cy="476" rx="50" ry="14"/></g>`;
   }
   if (s.kind === "forest") {
-    layers += `<circle cx="1150" cy="350" r="100" fill="#fff3d2" opacity="0.6" filter="drop-shadow(0 0 60px #fff3d2)"/>`;
-    layers += Array.from({length: 16}, (_, i) => `<path class="sway" d="M${i*110+(i%3)*30} 720 L${i*110+(i%3)*30+45} 350 L${i*110+(i%3)*30+90} 720Z" fill="#0b1b13" opacity="0.95" style="animation-delay: -${(i%4)*0.5}s;"/>`).join("");
-    layers += `<g class="fly-across" fill="#fff" opacity="0.05" style="animation-duration: 65s;"><rect x="0" y="200" width="400" height="60" rx="30"/></g>`;
-    layers += Array.from({length: 25}, (_, i) => `<circle class="firefly" cx="${(i*137)%1600}" cy="${500+(i*29)%200}" r="2" style="animation-delay: ${(i%5)}s;"/>`).join("");
+    // Bulan purnama lembut di balik pepohonan
+    layers += `<g class="sky-moon" opacity="0.85"><circle cx="1180" cy="300" r="86" fill="#fff3d2" opacity="0.18"/><circle cx="1180" cy="300" r="62" fill="#fff3d2" opacity="0.5"/><circle cx="1180" cy="300" r="46" fill="#fff8e6"/><circle cx="1164" cy="286" r="7" fill="#e8dcbc" opacity="0.5"/><circle cx="1196" cy="312" r="10" fill="#e8dcbc" opacity="0.35"/><circle cx="1194" cy="284" r="5" fill="#e8dcbc" opacity="0.4"/></g>`;
+    // Bintang berkelip
+    layers += Array.from({length: 26}, (_, i) => `<circle class="twinkle" cx="${(i*179+40)%1600}" cy="${40+(i*71)%330}" r="${i%3===0?2.2:1.4}" fill="#fff" style="animation-delay: -${(i%7)*0.6}s;"/>`).join("");
+    // Pohon pinus berundak (helper: batang + 3 tingkat dedaunan)
+    const pine = (x, base, h, w, fill, op, delay) => {
+      let t = `<g class="sway" opacity="${op}" style="animation-delay: -${delay}s; transform-origin: ${x}px ${base}px;">`;
+      t += `<rect x="${x - w * 0.06}" y="${base - h * 0.16}" width="${w * 0.12}" height="${h * 0.18}" fill="${fill}"/>`;
+      t += `<path d="M${x} ${base - h} L${x + w * 0.5} ${base - h * 0.42} L${x - w * 0.5} ${base - h * 0.42}Z" fill="${fill}"/>`;
+      t += `<path d="M${x} ${base - h * 0.82} L${x + w * 0.62} ${base - h * 0.24} L${x - w * 0.62} ${base - h * 0.24}Z" fill="${fill}"/>`;
+      t += `<path d="M${x} ${base - h * 0.62} L${x + w * 0.74} ${base - h * 0.04} L${x - w * 0.74} ${base - h * 0.04}Z" fill="${fill}"/>`;
+      return t + `</g>`;
+    };
+    // Lapisan belakang (jauh, pucat, kabut)
+    layers += Array.from({length: 11}, (_, i) => pine(i * 165 + 20, 700, 300 + (i % 3) * 40, 120, "#22382c", 0.5, (i % 5) * 0.7)).join("");
+    // Lapisan tengah
+    layers += Array.from({length: 9}, (_, i) => pine(i * 195 + 60, 720, 380 + (i % 4) * 45, 160, "#12261a", 0.85, (i % 4) * 0.6)).join("");
+    // Lapisan depan (dekat, paling gelap, besar)
+    layers += pine(120, 760, 520, 260, "#07160e", 1, 0.4);
+    layers += pine(1480, 770, 560, 280, "#07160e", 1, 1.1);
+    layers += pine(880, 780, 470, 240, "#0a1c12", 1, 0.8);
+    // Kabut tipis di antara lapisan
+    layers += `<g class="drift" style="animation-duration: 90s; opacity: 0.12;"><ellipse cx="500" cy="640" rx="420" ry="46" fill="#cfe0ba"/><ellipse cx="1100" cy="660" rx="380" ry="40" fill="#cfe0ba"/></g>`;
+    // Awan tinggi bergerak lambat
+    layers += `<g class="fly-across" fill="#fff" opacity="0.05" style="animation-duration: 75s;"><rect x="0" y="180" width="420" height="54" rx="27"/><rect x="70" y="152" width="260" height="48" rx="24"/></g>`;
+    // Kunang-kunang
+    layers += Array.from({length: 26}, (_, i) => `<circle class="firefly" cx="${(i * 137) % 1600}" cy="${520 + (i * 29) % 190}" r="${i % 4 === 0 ? 2.6 : 1.8}" fill="#f5ff9e" style="animation-delay: ${(i % 6) * 0.8}s;"/>`).join("");
   }
   if (s.kind === "sea") {
-    layers += `<circle class="sun-pulse" cx="1100" cy="280" r="100" fill="#fff3d2" filter="drop-shadow(0 0 50px #fff3d2)"/>`;
-    layers += `<g class="fly-across" fill="#fff" opacity="0.12" style="animation-duration: 50s;"><circle cx="0" cy="150" r="40"/><circle cx="50" cy="150" r="50"/><circle cx="100" cy="160" r="35"/></g>`;
+    // Matahari senja + halo lembut
+    layers += `<g class="sun-pulse" style="transform-origin: 1120px 300px;"><circle cx="1120" cy="300" r="150" fill="#ffd9a0" opacity="0.10"/><circle cx="1120" cy="300" r="105" fill="#ffe6b8" opacity="0.20"/><circle cx="1120" cy="300" r="72" fill="#fff3d2" opacity="0.95"/></g>`;
+    // Bintang tipis di langit atas
+    layers += Array.from({length: 18}, (_, i) => `<circle class="twinkle" cx="${(i * 211 + 60) % 1600}" cy="${30 + (i * 53) % 220}" r="${i % 3 === 0 ? 2 : 1.3}" fill="#fff" style="animation-delay: -${(i % 6) * 0.7}s;"/>`).join("");
+    // Awan bergerak lambat
+    layers += `<g class="fly-across" fill="#fff" opacity="0.13" style="animation-duration: 70s;"><rect x="0" y="170" width="360" height="46" rx="23"/><rect x="60" y="146" width="220" height="42" rx="21"/></g>`;
+    layers += `<g class="fly-across" fill="#fff" opacity="0.09" style="animation-duration: 95s; animation-delay: -30s;"><rect x="0" y="250" width="300" height="38" rx="19"/><rect x="50" y="232" width="180" height="34" rx="17"/></g>`;
+    // Burung camar
+    layers += `<g class="fly-across" stroke="#2b3f4a" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.5" style="animation-duration: 42s;"><path d="M0 200 q12 -10 24 0 q12 -10 24 0"/><path d="M60 230 q10 -8 20 0 q10 -8 20 0"/><path d="M30 260 q9 -7 18 0 q9 -7 18 0"/></g>`;
+    // Pantulan matahari di permukaan air
+    layers += `<g class="drift" style="animation-duration: 40s; opacity: 0.55;"><rect x="1060" y="620" width="120" height="6" rx="3" fill="#ffe6b8"/><rect x="1040" y="646" width="160" height="7" rx="3.5" fill="#ffd9a0"/><rect x="1075" y="672" width="90" height="6" rx="3" fill="#ffe6b8"/><rect x="1050" y="700" width="140" height="8" rx="4" fill="#ffcf94" opacity="0.7"/></g>`;
+    // Pohon kelapa di sisi kiri (siluet)
+    layers += `<g fill="#0a1c22" opacity="0.95">
+      <path d="M150 720 Q162 640 148 560 Q144 588 140 620 Q136 660 138 720Z"/>
+      <path d="M148 566 Q100 540 62 552 Q104 552 142 578Z"/>
+      <path d="M148 566 Q196 536 240 548 Q196 550 154 578Z"/>
+      <path d="M148 560 Q120 508 96 500 Q124 516 142 566Z"/>
+      <path d="M148 560 Q178 506 206 500 Q176 518 154 566Z"/>
+      <circle cx="140" cy="580" r="7"/><circle cx="158" cy="584" r="6"/>
+    </g>`;
+    layers += `<g fill="#0a1c22" opacity="0.8" transform="translate(1420 40) scale(0.8)">
+      <path d="M150 720 Q162 640 148 560 Q144 588 140 620 Q136 660 138 720Z"/>
+      <path d="M148 566 Q100 540 62 552 Q104 552 142 578Z"/>
+      <path d="M148 566 Q196 536 240 548 Q196 550 154 578Z"/>
+      <path d="M148 560 Q120 508 96 500 Q124 516 142 566Z"/>
+      <path d="M148 560 Q178 506 206 500 Q176 518 154 566Z"/>
+    </g>`;
   }
 
   const groundY = s.kind === "sea" ? 640 : 660;
   if (s.kind === "sea") {
+    // Lapisan air (jauh -> dekat), makin gelap ke depan
     layers += `<path class="wave-back" d="M-100 ${groundY-20} Q300 ${groundY-90} 700 ${groundY-20} T1700 ${groundY-20} L1700 900 L-100 900Z" fill="#0a202b" opacity="0.9"/>`;
+    layers += `<path class="wave-back" d="M-100 ${groundY-24} Q320 ${groundY-96} 720 ${groundY-24} T1700 ${groundY-24}" fill="none" stroke="#7fc6d8" stroke-width="3" opacity="0.30"/>`;
     layers += `<path class="wave-mid" d="M-100 ${groundY} Q400 ${groundY-60} 800 ${groundY} T1700 ${groundY} L1700 900 L-100 900Z" fill="#0c2936" opacity="0.9"/>`;
+    layers += `<path class="wave-mid" d="M-100 ${groundY-4} Q400 ${groundY-66} 800 ${groundY-4} T1700 ${groundY-4}" fill="none" stroke="#9ddcec" stroke-width="3.5" opacity="0.35"/>`;
     layers += `<path class="wave-front" d="M-100 ${groundY+30} Q400 ${groundY-40} 800 ${groundY+30} T1700 ${groundY+30} L1700 900 L-100 900Z" fill="${s.body}"/>`;
+    layers += `<path class="wave-front" d="M-100 ${groundY+26} Q400 ${groundY-46} 800 ${groundY+26} T1700 ${groundY+26}" fill="none" stroke="#cdeef7" stroke-width="4" opacity="0.40"/>`;
+    // Buih di tepi ombak depan
+    layers += Array.from({length: 14}, (_, i) => `<circle class="wave-front" cx="${-40 + i * 130}" cy="${groundY + 34 + (i % 3) * 6}" r="${5 + (i % 3) * 3}" fill="#eaf9ff" opacity="0.35" style="animation-delay: -${(i % 5) * 0.6}s;"/>`).join("");
+    // Pasir pantai di sudut kiri bawah
+    layers += `<path class="drift" style="animation-duration: 120s; opacity: 0.95;" d="M-100 900 L-100 800 Q180 770 420 812 Q560 836 640 900Z" fill="#c9a978"/>`;
+    layers += `<path class="drift" style="animation-duration: 120s; opacity: 0.35;" d="M-100 812 Q180 782 420 824 Q560 848 640 900 L-100 900Z" fill="#e6cfa4"/>`;
   } else {
     layers += `<path class="drift" d="M-100 ${groundY-40} Q300 ${groundY-90} 600 ${groundY-40} T1300 ${groundY-50} T1700 ${groundY-40} L1700 900 L-100 900Z" fill="${s.body}" opacity="0.6"/>`;
     layers += `<path class="drift" d="M-100 ${groundY} Q400 ${groundY-30} 800 ${groundY} T1700 ${groundY} L1700 900 L-100 900Z" fill="${s.body}" style="animation-delay: -10s;"/>`;
@@ -581,8 +720,10 @@ function applyWallpaper(mode, keyOrUrl) {
     }, 300);
     document.querySelectorAll("#sceneChips .chip").forEach(c => c.classList.toggle("on", c.dataset.q === keyOrUrl));
   } else {
-    state.customBg = keyOrUrl; saveState();
-    $("scene-custom").style.backgroundImage = `url('${keyOrUrl}')`;
+    // Buang kutip/tanda kurung yang bisa memutus string url() di CSS.
+    const safe = String(keyOrUrl).replace(/['"()\\]/g, encodeURIComponent);
+    state.customBg = safe; saveState();
+    $("scene-custom").style.backgroundImage = `url("${safe}")`;
     $("scene-custom").style.opacity = 1; $("scene").style.opacity = 0;
     document.querySelectorAll("#sceneChips .chip").forEach(c => c.classList.remove("on"));
   }
@@ -591,51 +732,138 @@ function applyWallpaper(mode, keyOrUrl) {
 document.querySelectorAll("#sceneChips .chip").forEach(btn => btn.onclick = () => applyWallpaper("svg", btn.dataset.q));
 
 /* ---------- Pinterest / Custom Wallpaper Extractor (Anti Gagal) ---------- */
+
+// Ambil URL gambar Pinterest langsung dari bentuk URL pin (tanpa fetch HTML).
+// Contoh: /pin/1234567890/ -> https://i.pinimg.com/originals/xx/yy/zz/1234567890.jpg
+// Trik ini hanya bisa menebak folder shard, jadi tetap dipakai sebagai fallback cepat.
+function pinterestIdFromUrl(u) {
+  const m = u.match(/\/pin\/(\d{6,})/) || u.match(/[?&]pin_id=(\d{6,})/);
+  return m ? m[1] : null;
+}
+
+// Normalisasi URL gambar: paksa https, dan naikkan 736x -> originals bila memungkinkan.
+function normalizeImageUrl(u) {
+  let out = String(u || "").trim();
+  if (!out) return "";
+  if (out.startsWith("//")) out = "https:" + out;
+  out = out.replace(/^http:\/\//i, "https://");
+  // Pinterest: pakai resolusi penuh supaya tidak pecah di TV 1080p
+  out = out.replace(/i\.pinimg\.com\/\d+x\//i, "i.pinimg.com/originals/");
+  return out;
+}
+
+// Cari kandidat URL gambar di dalam HTML halaman (Pinterest atau situs biasa).
+function extractImageFromHtml(html) {
+  const patterns = [
+    /https:\/\/i\.pinimg\.com\/(?:originals|1200x|736x)\/[A-Za-z0-9_\/.-]+\.(?:jpg|jpeg|png|webp)/i,
+    /"(?:og:image|twitter:image)"\s+content="([^"]+)"/i,
+    /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+    /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
+    /<img[^>]+src=["'](https:\/\/[^"']+\.(?:jpg|jpeg|png|webp))["']/i
+  ];
+  for (const re of patterns) {
+    const m = html.match(re);
+    if (m && m[1]) return m[1];
+    if (m && m[0] && m[0].startsWith("https://")) return m[0];
+  }
+  return null;
+}
+
+// Coba beberapa proxy CORS publik — kalau satu mati/limit, lanjut ke berikutnya.
+const CORS_PROXIES = [
+  (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
+];
+
+async function fetchViaProxy(target) {
+  let lastErr = null;
+  for (const build of CORS_PROXIES) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 9000);
+      const res = await fetch(build(target), { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const text = await res.text();
+      if (text && text.length > 200) return text;
+      throw new Error("respons kosong");
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error("semua proxy gagal");
+}
+
+function setWallBtn(text, bg, revertMs) {
+  const btn = $("btnWallSearch");
+  btn.textContent = text;
+  btn.style.background = bg;
+  if (revertMs) {
+    clearTimeout(btn._revert);
+    btn._revert = setTimeout(() => {
+      btn.textContent = "Terapkan";
+      btn.style.background = "var(--gold)";
+    }, revertMs);
+  }
+}
+
 $("btnWallSearch").onclick = async () => {
-  let url = $("wallInput").value.trim();
-  if(!url) return;
+  const raw = $("wallInput").value.trim();
+  if (!raw) return;
 
-  $("btnWallSearch").textContent = "Mencari...";
-  $("btnWallSearch").style.background = "#fff";
+  setWallBtn("Mencari...", "#fff", 0);
 
-  // Cek apakah url adalah gambar langsung
-  if (url.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
-    applyWallpaper("img", url);
+  // 1) URL gambar langsung
+  if (/^https?:\/\/.+\.(jpe?g|gif|png|webp|avif)(\?.*)?$/i.test(raw)) {
+    applyWallpaper("img", normalizeImageUrl(raw));
     finishWallSearch();
     return;
   }
 
-  // Jika URL berupa Pinterest
-  if (url.includes("pin.it") || url.includes("pinterest.")) {
-    try {
-      // Proxy handal untuk mengambil HTML raw dari Pinterest (akan me-resolve redirect pin.it otomatis)
-      const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
-      const html = await res.text();
-      
-      // Temukan link gambar dengan format resolusi 736x atau originals di dalam HTML Pinterest
-      const match = html.match(/https:\/\/i\.pinimg\.com\/(?:originals|736x)\/[a-zA-Z0-9_/-]+\.(?:jpg|png|webp)/i);
-      
-      if (match && match[0]) {
-        url = match[0];
-      } else {
-        throw new Error("Gambar tidak ditemukan");
+  // 2) Pinterest: coba tebak URL gambar dari ID pin dulu (cepat, tanpa proxy)
+  const isPinterest = /pin\.it|pinterest\./i.test(raw);
+  if (isPinterest) {
+    const pinId = pinterestIdFromUrl(raw);
+    if (pinId) {
+      // i.pinimg.com butuh 2 level folder shard; coba beberapa kombinasi umum.
+      const shards = ["originals", "736x", "1200x"];
+      for (const shard of shards) {
+        const guess = `https://i.pinimg.com/${shard}/${pinId.slice(0,2)}/${pinId.slice(2,4)}/${pinId.slice(4,6)}/${pinId}.jpg`;
+        if (await imageLoads(guess)) {
+          applyWallpaper("img", guess);
+          finishWallSearch();
+          return;
+        }
       }
-    } catch (e) {
-      $("btnWallSearch").textContent = "Gagal";
-      $("btnWallSearch").style.background = "#ffb3b3";
-      setTimeout(()=> { $("btnWallSearch").textContent = "Terapkan"; $("btnWallSearch").style.background = "var(--gold)"; }, 2000);
-      return;
     }
   }
 
-  applyWallpaper("img", url);
-  finishWallSearch();
+  // 3) Fallback: ambil HTML lewat proxy, lalu ekstrak og:image / i.pinimg.com
+  try {
+    const html = await fetchViaProxy(raw);
+    const found = extractImageFromHtml(html);
+    if (!found) throw new Error("gambar tidak ditemukan di halaman");
+    applyWallpaper("img", normalizeImageUrl(found));
+    finishWallSearch();
+  } catch (e) {
+    setWallBtn("Gagal", "#ffb3b3", 2500);
+  }
 };
 
+// Cek apakah URL gambar benar-benar bisa dimuat (menghindari wallpaper kosong).
+function imageLoads(u) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const timer = setTimeout(() => { img.onload = img.onerror = null; resolve(false); }, 7000);
+    img.onload = () => { clearTimeout(timer); resolve(true); };
+    img.onerror = () => { clearTimeout(timer); resolve(false); };
+    img.src = u;
+  });
+}
+
 function finishWallSearch() {
-  $("btnWallSearch").textContent = "Diterapkan";
-  $("btnWallSearch").style.background = "var(--gold)";
-  setTimeout(()=> $("btnWallSearch").textContent = "Terapkan", 2000);
+  setWallBtn("Diterapkan", "var(--gold)", 2000);
 }
 
 /* ---------- Audio Alam (DOM) ---------- */
@@ -930,6 +1158,10 @@ function setImmersive(on) {
   $("btnFs").innerHTML = on ? ICONS.fsExit : ICONS.fsEnter;
   $("btnFs").title = on ? "Keluar Layar Penuh (Otomatis Pause)" : "Layar Penuh (Otomatis Play)";
 
+  // Reset memori tombol atas supaya tidak menunjuk elemen yang tidak valid
+  // saat daftar topButtons berubah (immersive <-> normal).
+  lastTopBtn = null;
+
   if (on) {
     setPlaying(true);
     $("audio").play().catch(() => setPlaying(false));
@@ -978,16 +1210,21 @@ function findClosestInList(currentEl, list, dir) {
     const dx = cx - curCx;
     const dy = cy - curCy;
 
-    if (dir === "Right" && dx > 8 && Math.abs(dy) < curRect.height) {
+    // Toleransi vertikal/horizontal longgar supaya chip & stepper yang tidak
+    // sejajar sempurna tetap bisa dijangkau D-pad.
+    const rowTol = Math.max(curRect.height, r.height) * 0.9;
+    const colTol = Math.max(curRect.width, r.width) * 0.9;
+
+    if (dir === "Right" && dx > 4 && Math.abs(dy) < rowTol) {
       const score = dx + Math.abs(dy) * 3;
       if (score < bestScore) { bestScore = score; bestEl = el; }
-    } else if (dir === "Left" && dx < -8 && Math.abs(dy) < curRect.height) {
+    } else if (dir === "Left" && dx < -4 && Math.abs(dy) < rowTol) {
       const score = Math.abs(dx) + Math.abs(dy) * 3;
       if (score < bestScore) { bestScore = score; bestEl = el; }
-    } else if (dir === "Down" && dy > 12) {
+    } else if (dir === "Down" && dy > 4 && Math.abs(dx) < colTol) {
       const score = dy * 2 + Math.abs(dx);
       if (score < bestScore) { bestScore = score; bestEl = el; }
-    } else if (dir === "Up" && dy < -12) {
+    } else if (dir === "Up" && dy < -4 && Math.abs(dx) < colTol) {
       const score = Math.abs(dy) * 2 + Math.abs(dx);
       if (score < bestScore) { bestScore = score; bestEl = el; }
     }
@@ -1019,7 +1256,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "MediaPreviousTrack") { e.preventDefault(); prevAyah(); return; }
 
   if ($("pickerModal").classList.contains("open")) {
-    const items = Array.from($("pickerModal").querySelectorAll("button"));
+    const items = Array.from($("pickerModal").querySelectorAll("button")).filter(el => el.offsetParent !== null);
     if (e.key.startsWith("Arrow")) {
       e.preventDefault();
       const dir = e.key.replace("Arrow", "");
@@ -1028,13 +1265,19 @@ document.addEventListener("keydown", e => {
         next.focus();
         next.scrollIntoView({ block: "nearest", behavior: "smooth" });
       } else if (dir === "Up") {
+        // Fallback: naik ke tombol tutup picker
         $("btnClosePicker").focus();
+      } else if (dir === "Down") {
+        // Fallback: turun ke item pertama grid
+        const first = items.find(el => el !== $("btnClosePicker"));
+        if (first) first.focus();
       }
     }
     return;
   }
 
   if ($("settingsBackdrop").classList.contains("open")) {
+    // Panah kiri/kanan di input teks tetap dipakai untuk memindah kursor.
     if (isTextInput && (e.key === "ArrowLeft" || e.key === "ArrowRight")) return;
     const items = Array.from($("panel").querySelectorAll("button, input")).filter(el => el.offsetParent !== null);
     if (e.key.startsWith("Arrow")) {
@@ -1044,6 +1287,13 @@ document.addEventListener("keydown", e => {
       if (next) {
         next.focus();
         next.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      } else if (dir === "Up") {
+        // Fallback: naik ke tombol tutup panel
+        $("btnClosePanel").focus();
+      } else if (dir === "Down" && active === $("btnClosePanel")) {
+        // Turun dari tombol tutup ke kontrol pertama di panel
+        const first = items.find(el => el !== $("btnClosePanel"));
+        if (first) first.focus();
       }
     }
     return;
@@ -1061,6 +1311,8 @@ document.addEventListener("keydown", e => {
   const inDock = dockButtons.includes(active);
 
   if (e.key.startsWith("Arrow")) {
+    // Di input teks, panah kiri/kanan dipakai untuk memindah kursor.
+    if (isTextInput && (e.key === "ArrowLeft" || e.key === "ArrowRight")) return;
     e.preventDefault();
 
     if (!inTop && !inDock) {
@@ -1088,6 +1340,7 @@ document.addEventListener("keydown", e => {
     } 
     else if (e.key === "ArrowUp") {
       if (inDock) {
+        // Saat immersive hanya btnFs yang tersedia di bar atas.
         const target = (lastTopBtn && topButtons.includes(lastTopBtn)) ? lastTopBtn : topButtons[0];
         target.focus();
       } else {
@@ -1096,10 +1349,12 @@ document.addEventListener("keydown", e => {
     }
   } 
   else if (e.code === "Space") {
+    if (isTextInput) return; // biar spasi tetap bisa diketik di input
     e.preventDefault();
     $("play").click();
   } 
   else if (e.key === "Enter" && !inTop && !inDock) {
+    if (isTextInput) return; // Enter di input teks tidak memicu play
     e.preventDefault();
     $("play").focus();
     $("play").click();
