@@ -2,6 +2,8 @@
 
 Aplikasi web Al-Quran interaktif yang dirancang untuk memberikan pengalaman membaca dan mendengarkan Al-Quran yang tenang, estetis, dan mendalam. Dilengkapi dengan latar animasi bergerak, suara alam ambien, dukungan PWA (dapat diinstal di HP/TV), serta navigasi penuh menggunakan *Remote Android TV*.
 
+🔗 **Live Demo:** [https://semogabermanfaat.github.io/quran](https://semogabermanfaat.github.io/quran)
+
 ---
 
 ## ✨ Fitur Utama
@@ -18,9 +20,8 @@ Aplikasi web Al-Quran interaktif yang dirancang untuk memberikan pengalaman memb
 
 ---
 
-## 🚀 Cara Menjalankan
+## 🚀 Cara Menjalankan Secara Lokal
 
 1. Clone repository ini atau unduh sebagai file ZIP:
    ```bash
    git clone [https://github.com/username/quran-immersive.git](https://github.com/username/quran-immersive.git)
-   
