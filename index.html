@@ -329,6 +329,18 @@
   body.immersive .play svg { width: 28px; height: 28px; }
   body.immersive .dock .ctl { background: var(--glass); border: 1px solid var(--line); border-radius: 50%; width: 48px; height: 48px; padding: 0; }
 
+  /* Auto-hide kontrol saat idle (5 detik), muncul lagi saat ada input remote */
+  body.immersive .fs-float,
+  body.immersive .dock {
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  body.immersive.ui-hidden .fs-float,
+  body.immersive.ui-hidden .dock {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-12px);
+  }
+
   /* Perbaikan Offset Mobile */
   @media (max-width: 720px) {
     .brand { display: none; }
@@ -1256,6 +1268,20 @@ $("btnRepeat").onclick = () => { const m = ["all","one","surah"]; state.repeat =
 /* =========================================================
    LAYAR PENUH (OTOMATIS PLAY SAAT MASUK, OTOMATIS PAUSE SAAT KELUAR)
    ========================================================= */
+let uiHideTimer = null;
+const UI_HIDE_MS = 5000;
+
+// Tampilkan kembali kontrol & mulai ulang timer sembunyi otomatis.
+function showImmersiveUI() {
+  document.body.classList.remove("ui-hidden");
+  clearTimeout(uiHideTimer);
+  uiHideTimer = setTimeout(() => {
+    if (document.body.classList.contains("immersive")) {
+      document.body.classList.add("ui-hidden");
+    }
+  }, UI_HIDE_MS);
+}
+
 function setImmersive(on) {
   document.body.classList.toggle("immersive", on);
   $("btnFs").innerHTML = on ? ICONS.fsExit : ICONS.fsEnter;
@@ -1266,10 +1292,13 @@ function setImmersive(on) {
   lastTopBtn = null;
 
   if (on) {
+    showImmersiveUI();
     setPlaying(true);
     $("audio").play().catch(() => setPlaying(false));
     setTimeout(() => $("play").focus(), 60);
   } else {
+    clearTimeout(uiHideTimer);
+    document.body.classList.remove("ui-hidden");
     $("audio").pause();
     setPlaying(false);
     setTimeout(() => $("play").focus(), 60);
@@ -1291,6 +1320,10 @@ document.addEventListener("fullscreenchange", () => {
     setImmersive(false);
   }
 });
+
+// Sentuhan/gerakan mouse juga menampilkan kembali kontrol (selain remote).
+document.addEventListener("mousemove", () => { if (document.body.classList.contains("immersive")) showImmersiveUI(); });
+document.addEventListener("touchstart", () => { if (document.body.classList.contains("immersive")) showImmersiveUI(); });
 
 /* =========================================================
    SISTEM NAVIGASI 100% REMOTE TV (D-PAD SPATIAL ENGINE)
@@ -1336,6 +1369,9 @@ function findClosestInList(currentEl, list, dir) {
 }
 
 document.addEventListener("keydown", e => {
+  // Setiap input remote (tombol/D-pad) menampilkan kembali kontrol di layar penuh.
+  if (document.body.classList.contains("immersive")) showImmersiveUI();
+
   const active = document.activeElement;
   const isTextInput = active && active.tagName === "INPUT" && active.type === "text";
 
