@@ -3,6 +3,7 @@
 Aplikasi web Al-Quran interaktif yang dirancang untuk memberikan pengalaman membaca dan mendengarkan Al-Quran yang tenang, estetis, dan mendalam. Dilengkapi dengan latar animasi bergerak, suara alam ambien, dukungan PWA (dapat diinstal di HP/TV), serta navigasi penuh menggunakan *Remote Android TV*.
 
 🔗 **Live Demo:** [https://semogabermanfaat.github.io/quran](https://semogabermanfaat.github.io/quran)
+🔗 **APK:** [https://semogabermanfaat.github.io/quran-immersive](https://semogabermanfaat.github.io/quran-immersive)
 
 ---
 
