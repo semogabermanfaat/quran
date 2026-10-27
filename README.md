@@ -4,7 +4,7 @@ Aplikasi web Al-Quran interaktif yang dirancang untuk memberikan pengalaman memb
 
 🔗 **Live Demo:** [https://semogabermanfaat.github.io/quran](https://semogabermanfaat.github.io/quran)
 
-🔗 **APK:** [https://semogabermanfaat.github.io/quran-immersive](https://semogabermanfaat.github.io/quran-immersive)
+🔗 **APK:** [https://github.com/semogabermanfaat/quran-immersive](https://github.com/semogabermanfaat/quran-immersive)
 
 ---
 
